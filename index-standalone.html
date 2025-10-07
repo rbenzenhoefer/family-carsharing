@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Car Sharing</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.400.0/dist/umd/lucide-react.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronLeft, ChevronRight, AlertTriangle, Calendar, Settings, X } = LucideReact;
+
+        // Test-Daten
+        const initialBookings = [
+            {
+                id: '1',
+                carIndex: 0,
+                day: 'Mo',
+                startTime: 7,
+                endTime: 15,
+                userId: 1,
+                userName: 'Max',
+                color: 'bg-red-400'
+            },
+            {
+                id: '2',
+                carIndex: 0,
+                day: 'Mo',
+                startTime: 13,
+                endTime: 18,
+                userId: 5,
+                userName: 'Sarah',
+                color: 'bg-sky-300'
+            },
+            {
+                id: '3',
+                carIndex: 1,
+                day: 'Mo',
+                startTime: 9,
+                endTime: 19,
+                userId: 2,
+                userName: 'Lisa',
+                color: 'bg-purple-400'
+            },
+            {
+                id: '4',
+                carIndex: 2,
+                day: 'Mo',
+                startTime: 6,
+                endTime: 10,
+                userId: 3,
+                userName: 'Anna',
+                color: 'bg-yellow-300'
+            },
+            {
+                id: '5',
+                carIndex: 2,
+                day: 'Mo',
+                startTime: 15,
+                endTime: 20,
+                userId: 4,
+                userName: 'Tom',
+                color: 'bg-green-400'
+            }
+        ];
+
+        const users = [
+            { id: 1, name: 'Max', color: 'bg-red-400' },
+            { id: 2, name: 'Lisa', color: 'bg-purple-400' },
+            { id: 3, name: 'Anna', color: 'bg-yellow-300' },
+            { id: 4, name: 'Tom', color: 'bg-green-400' },
+            { id: 5, name: 'Sarah', color: 'bg-sky-300' }
+        ];
+
+        const cars = [
+            { index: 0, name: 'A Klasse' },
+            { index: 1, name: 'C Klasse' },
+            { index: 2, name: 'E Auto' }
+        ];
+
+        // Utility Functions
+        function getWeekDates(offset = 0) {
+            const today = new Date();
+            const currentDay = today.getDay();
+            
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
+            monday.setDate(monday.getDate() + (offset * 7));
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const formatDate = (date) => {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return { day, month, year };
+            };
+            
+            const start = formatDate(monday);
+            const end = formatDate(sunday);
+            
+            return `${start.day}.${start.month}. - ${end.day}.${end.month}.${end.year}`;
+        }
+
+        function detectConflicts(bookings) {
+            const conflicts = new Set();
+            
+            for (let i = 0; i < bookings.length; i++) {
+                for (let j = i + 1; j < bookings.length; j++) {
+                    const b1 = bookings[i];
+                    const b2 = bookings[j];
+                    
+                    if (
+                        b1.day === b2.day &&
+                        b1.carIndex === b2.carIndex &&
+                        b1.startTime < b2.endTime &&
+                        b1.endTime > b2.startTime
+                    ) {
+                        conflicts.add(b1.id);
+                        conflicts.add(b2.id);
+                    }
+                }
+            }
+            
+            return conflicts;
+        }
+
+        // Header Component
+        function Header({ weekOffset, onWeekChange }) {
+            const handlePreviousWeek = () => {
+                onWeekChange(weekOffset - 1);
+            };
+
+            const handleNextWeek = () => {
+                onWeekChange(weekOffset + 1);
+            };
+
+            return (
+                <div className="relative">
+                    <h1 className="text-base font-semibold text-gray-800 text-center mb-3">
+                        Family Car Sharing
+                    </h1>
+                    
+                    <div className="flex items-center justify-center gap-4 mb-6">
+                        <button 
+                            onClick={handlePreviousWeek}
+                            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        
+                        <span className="text-sm text-gray-600">
+                            {getWeekDates(weekOffset)}
+                        </span>
+                        
+                        <button 
+                            onClick={handleNextWeek}
+                            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                            <ChevronRight className="w-5 h-5 text-gray-600" />
+                        </button>
+                    </div>
+                    
+                    <button className="absolute top-0 right-0 w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg font-bold hover:bg-blue-600 transition-colors">
+                        R
+                    </button>
+                </div>
+            );
+        }
+
+        // WeekDayTabs Component
+        function WeekDayTabs({ selectedDay, onDayChange }) {
+            const weekDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+            return (
+                <div className="bg-gray-100 p-1.5 rounded-2xl mb-6">
+                    <div className="flex gap-1">
+                        {weekDays.map((day) => (
+                            <button
+                                key={day}
+                                onClick={() => onDayChange(day)}
+                                className={`flex-1 py-2 text-sm font-medium rounded-xl transition-all ${
+                                    selectedDay === day
+                                        ? 'bg-white text-blue-500 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                            >
+                                {day}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // BookingBlock Component
+        function BookingBlock({ booking, hasConflict }) {
+            const height = (booking.endTime - booking.startTime) * 40;
+            const top = booking.startTime * 40;
+
+            return (
+                <div
+                    className={`absolute left-1 right-1 rounded-xl shadow-md hover:opacity-90 cursor-pointer ${booking.color}`}
+                    style={{
+                        height: `${height}px`,
+                        top: `${top}px`,
+                        zIndex: 10
+                    }}
+                >
+                    <div className="h-full flex items-center justify-center relative">
+                        {hasConflict && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-white rounded-full p-1.5 shadow-lg">
+                                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {height > 30 && (
+                            <div className="text-white text-xs font-medium px-2 text-center">
+                                {booking.userName}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // BookingModal Component
+        function BookingModal({ 
+            isOpen, 
+            onClose, 
+            onSubmit, 
+            carIndex, 
+            startTime, 
+            users, 
+            cars 
+        }) {
+            const [formData, setFormData] = useState({
+                userId: users[0]?.id || 1,
+                carIndex: carIndex || 0,
+                startTime: startTime || 9,
+                endTime: (startTime || 9) + 1,
+                distance: '',
+                note: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit(formData);
+                onClose();
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: name === 'userId' || name === 'carIndex' || name === 'startTime' || name === 'endTime' 
+                        ? parseInt(value) 
+                        : value
+                }));
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Neue Buchung</h2>
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Benutzer
+                                </label>
+                                <select
+                                    name="userId"
+                                    value={formData.userId}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    {users.map(user => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Auto
+                                </label>
+                                <select
+                                    name="carIndex"
+                                    value={formData.carIndex}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    {cars.map(car => (
+                                        <option key={car.index} value={car.index}>
+                                            {car.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Startzeit
+                                </label>
+                                <select
+                                    name="startTime"
+                                    value={formData.startTime}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                        <option key={i} value={i}>
+                                            {String(i).padStart(2, '0')}:00
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Endzeit
+                                </label>
+                                <select
+                                    name="endTime"
+                                    value={formData.endTime}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                        <option key={i + 1} value={i + 1}>
+                                            {String(i + 1).padStart(2, '0')}:00
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Strecke (km) - Optional
+                                </label>
+                                <input
+                                    type="number"
+                                    name="distance"
+                                    value={formData.distance}
+                                    onChange={handleChange}
+                                    placeholder="z.B. 50"
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Notiz - Optional
+                                </label>
+                                <textarea
+                                    name="note"
+                                    value={formData.note}
+                                    onChange={handleChange}
+                                    placeholder="z.B. Einkaufen, Arzttermin..."
+                                    rows={3}
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                                >
+                                    Abbrechen
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+                                >
+                                    Buchen
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // CalendarGrid Component
+        function CalendarGrid({ 
+            bookings, 
+            selectedDay, 
+            onSlotClick, 
+            cars 
+        }) {
+            const timeSlots = Array.from({ length: 25 }, (_, i) => i);
+            const dayBookings = bookings.filter(booking => booking.day === selectedDay);
+            const conflicts = detectConflicts(dayBookings);
+
+            const handleSlotClick = (carIndex, timeSlot) => {
+                onSlotClick(carIndex, timeSlot);
+            };
+
+            return (
+                <div className="bg-white rounded-2xl overflow-hidden">
+                    <div className="grid grid-cols-4 border-b border-gray-200">
+                        <div className="w-15 bg-white"></div>
+                        
+                        {cars.map((car, index) => (
+                            <div 
+                                key={car.index}
+                                className={`py-3 text-xs font-semibold text-center ${
+                                    index === 1 ? 'bg-blue-50' : 'bg-white'
+                                }`}
+                            >
+                                {car.name}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="relative">
+                        <div className="grid grid-cols-4">
+                            <div className="w-15">
+                                {timeSlots.map(time => (
+                                    <div 
+                                        key={time}
+                                        className="h-10 border-r border-b border-gray-200 flex items-center justify-end pr-2"
+                                    >
+                                        <span className="text-[10px] text-gray-400 font-medium">
+                                            {String(time).padStart(2, '0')}:00
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {cars.map((car, carIndex) => (
+                                <div 
+                                    key={car.index}
+                                    className={`${carIndex === 1 ? 'bg-blue-50/30' : 'bg-white'}`}
+                                >
+                                    {timeSlots.map(time => (
+                                        <div
+                                            key={`${car.index}-${time}`}
+                                            className="h-10 border-r border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => handleSlotClick(car.index, time)}
+                                        />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        {dayBookings.map(booking => (
+                            <BookingBlock
+                                key={booking.id}
+                                booking={booking}
+                                hasConflict={conflicts.has(booking.id)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Footer Component
+        function Footer() {
+            return (
+                <div className="bg-gray-100 p-2 rounded-2xl">
+                    <div className="flex gap-4">
+                        <button className="flex-1 flex flex-col items-center gap-1 py-3 bg-white text-blue-500 rounded-xl shadow-md transition-all">
+                            <Calendar className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Book</span>
+                        </button>
+                        
+                        <button className="flex-1 flex flex-col items-center gap-1 py-3 text-gray-500 hover:text-gray-700 transition-colors">
+                            <Settings className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Manage</span>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [selectedDay, setSelectedDay] = useState('Mo');
+            const [weekOffset, setWeekOffset] = useState(0);
+            const [bookings, setBookings] = useState([]);
+            const [bookingModal, setBookingModal] = useState({
+                isOpen: false,
+                carIndex: null,
+                startTime: null
+            });
+
+            useEffect(() => {
+                const saved = localStorage.getItem('bookings');
+                if (saved) {
+                    setBookings(JSON.parse(saved));
+                } else {
+                    setBookings(initialBookings);
+                }
+            }, []);
+
+            useEffect(() => {
+                if (bookings.length > 0) {
+                    localStorage.setItem('bookings', JSON.stringify(bookings));
+                }
+            }, [bookings]);
+
+            const handleDayChange = (day) => {
+                setSelectedDay(day);
+            };
+
+            const handleWeekChange = (offset) => {
+                setWeekOffset(offset);
+            };
+
+            const handleSlotClick = (carIndex, startTime) => {
+                setBookingModal({
+                    isOpen: true,
+                    carIndex,
+                    startTime
+                });
+            };
+
+            const handleSaveBooking = (formData) => {
+                const user = users.find(u => u.id === formData.userId);
+                
+                const newBooking = {
+                    id: crypto.randomUUID(),
+                    carIndex: formData.carIndex,
+                    day: selectedDay,
+                    startTime: formData.startTime,
+                    endTime: formData.endTime,
+                    userId: formData.userId,
+                    userName: user.name,
+                    color: user.color,
+                    distance: formData.distance || null,
+                    note: formData.note || null
+                };
+
+                setBookings(prev => [...prev, newBooking]);
+            };
+
+            const handleCloseModal = () => {
+                setBookingModal({
+                    isOpen: false,
+                    carIndex: null,
+                    startTime: null
+                });
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6">
+                        <Header 
+                            weekOffset={weekOffset} 
+                            onWeekChange={handleWeekChange} 
+                        />
+
+                        <WeekDayTabs 
+                            selectedDay={selectedDay} 
+                            onDayChange={handleDayChange} 
+                        />
+
+                        <CalendarGrid 
+                            bookings={bookings}
+                            selectedDay={selectedDay}
+                            onSlotClick={handleSlotClick}
+                            cars={cars}
+                        />
+
+                        <div className="mt-6">
+                            <Footer />
+                        </div>
+
+                        <BookingModal
+                            isOpen={bookingModal.isOpen}
+                            onClose={handleCloseModal}
+                            onSubmit={handleSaveBooking}
+                            carIndex={bookingModal.carIndex}
+                            startTime={bookingModal.startTime}
+                            users={users}
+                            cars={cars}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        // Render App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
