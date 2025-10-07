@@ -1,16 +1,14 @@
 # Family Car Sharing App
 
-Eine React-basierte App für das Familien-Car-Sharing mit exaktem Design wie im Screenshot.
 
 ## Features
 
-✅ **Pixel-perfect Design** - Exakt wie im Screenshot
-✅ **Wochentag-Tabs** - Wechsel zwischen Mo-So
-✅ **Wochenwechsel** - Navigation mit Pfeilen
-✅ **Buchungen erstellen** - Klick auf freie Slots
-✅ **Buchungen anzeigen** - Farbige Blöcke im Grid
-✅ **Konflikt-Erkennung** - Automatische Erkennung von Überschneidungen
-✅ **Lokale Persistenz** - localStorage für Daten
+**Wochentag-Tabs** - Wechsel zwischen Mo-So
+**Wochenwechsel** - Navigation mit Pfeilen
+**Buchungen erstellen** - Klick auf freie Slots
+**Buchungen anzeigen** - Farbige Blöcke im Grid
+**Konflikt-Erkennung** - Automatische Erkennung von Überschneidungen
+**Lokale Persistenz** - localStorage für Daten
 
 ## Installation
 
@@ -23,8 +21,6 @@ npm install
 ```bash
 npm run dev
 ```
-
-3. App öffnen: http://localhost:5173
 
 ## Verwendung
 
