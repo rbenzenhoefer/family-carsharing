@@ -236,44 +236,42 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Content mit Padding unten für Footer */}
-      <div className="pb-32">
-        <div className="p-6 pt-8">
-          {currentPage === 'book' && (
-            <Header 
-              weekOffset={weekOffset} 
-              onWeekChange={handleWeekChange} 
-            />
-          )}
+      {/* Content - scrollt unter Footer durch */}
+      <div className="p-6 pt-8 pb-40">
+        {currentPage === 'book' && (
+          <Header 
+            weekOffset={weekOffset} 
+            onWeekChange={handleWeekChange} 
+          />
+        )}
 
-          {currentPage === 'book' && (
-            <WeekDayTabs 
-              selectedDay={selectedDay} 
-              onDayChange={handleDayChange} 
-            />
-          )}
+        {currentPage === 'book' && (
+          <WeekDayTabs 
+            selectedDay={selectedDay} 
+            onDayChange={handleDayChange} 
+          />
+        )}
 
-          {currentPage === 'book' ? (
-            <CalendarGrid 
-              bookings={bookings.filter(booking => booking.weekOffset === weekOffset)}
-              selectedDay={selectedDay}
-              onSlotClick={handleSlotClick}
-              onEditBooking={handleEditBooking}
-              cars={cars}
-            />
-          ) : (
-            <ManagePage
-              cars={cars}
-              users={users}
-              onUpdateCars={handleUpdateCars}
-              onUpdateUsers={handleUpdateUsers}
-            />
-          )}
-        </div>
+        {currentPage === 'book' ? (
+          <CalendarGrid 
+            bookings={bookings.filter(booking => booking.weekOffset === weekOffset)}
+            selectedDay={selectedDay}
+            onSlotClick={handleSlotClick}
+            onEditBooking={handleEditBooking}
+            cars={cars}
+          />
+        ) : (
+          <ManagePage
+            cars={cars}
+            users={users}
+            onUpdateCars={handleUpdateCars}
+            onUpdateUsers={handleUpdateUsers}
+          />
+        )}
       </div>
 
-      {/* Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white z-40 border-t border-gray-100">
+      {/* Sticky Footer - nur Buttons sichtbar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40">
         <Footer 
           currentPage={currentPage}
           onPageChange={handlePageChange}
