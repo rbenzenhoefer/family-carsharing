@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function BookingModal({ 
   isOpen, 
@@ -38,19 +38,23 @@ export default function BookingModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">Neue Buchung</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white rounded-t-3xl px-6 pt-6 pb-4 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800">Neue Buchung</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Benutzer */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -127,7 +131,7 @@ export default function BookingModal({
             </select>
           </div>
 
-          {/* Strecke (optional) */}
+          {/* Strecke */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Strecke (km) - Optional
@@ -142,7 +146,7 @@ export default function BookingModal({
             />
           </div>
 
-          {/* Notiz (optional) */}
+          {/* Notiz */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Notiz - Optional

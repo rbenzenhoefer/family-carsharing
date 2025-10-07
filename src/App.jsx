@@ -7,7 +7,6 @@ import EditBookingModal from './components/EditBookingModal';
 import ManagePage from './components/ManagePage';
 import Footer from './components/Footer';
 
-// Test-Daten mit Wochen-Offset
 const initialBookings = [
   {
     id: '1',
@@ -18,13 +17,13 @@ const initialBookings = [
     userId: 1,
     userName: 'Max',
     color: 'bg-red-400',
-    weekOffset: 0 // Aktuelle Woche
+    weekOffset: 0
   },
   {
     id: '2',
     carIndex: 0,
     day: 'Mo',
-    startTime: 13, // Konflikt mit Buchung 1!
+    startTime: 13,
     endTime: 18,
     userId: 5,
     userName: 'Sarah',
@@ -86,7 +85,7 @@ function App() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [cars, setCars] = useState([]);
-  const [currentPage, setCurrentPage] = useState('book'); // 'book' oder 'manage'
+  const [currentPage, setCurrentPage] = useState('book');
   
   const [bookingModal, setBookingModal] = useState({
     isOpen: false,
@@ -99,7 +98,6 @@ function App() {
     booking: null
   });
 
-  // localStorage Sync
   useEffect(() => {
     const savedBookings = localStorage.getItem('bookings');
     const savedUsers = localStorage.getItem('users');
@@ -142,17 +140,14 @@ function App() {
     }
   }, [cars]);
 
-  // Wochentag ändern
   const handleDayChange = (day) => {
     setSelectedDay(day);
   };
 
-  // Woche ändern
   const handleWeekChange = (offset) => {
     setWeekOffset(offset);
   };
 
-  // Grid-Slot klicken
   const handleSlotClick = (carIndex, startTime) => {
     setBookingModal({
       isOpen: true,
@@ -161,7 +156,6 @@ function App() {
     });
   };
 
-  // Buchung speichern
   const handleSaveBooking = (formData) => {
     const user = users.find(u => u.id === formData.userId);
     
@@ -176,13 +170,12 @@ function App() {
       color: user.color,
       distance: formData.distance || null,
       note: formData.note || null,
-      weekOffset: weekOffset // Speichere die aktuelle Woche
+      weekOffset: weekOffset
     };
 
     setBookings(prev => [...prev, newBooking]);
   };
 
-  // Modal schließen
   const handleCloseModal = () => {
     setBookingModal({
       isOpen: false,
@@ -191,7 +184,6 @@ function App() {
     });
   };
 
-  // Buchung bearbeiten
   const handleEditBooking = (booking) => {
     setEditModal({
       isOpen: true,
@@ -199,7 +191,6 @@ function App() {
     });
   };
 
-  // Buchung speichern (Bearbeitung)
   const handleSaveEditedBooking = (formData) => {
     const user = users.find(u => u.id === formData.userId);
     
@@ -220,12 +211,10 @@ function App() {
     ));
   };
 
-  // Buchung löschen
   const handleDeleteBooking = () => {
     setBookings(prev => prev.filter(booking => booking.id !== editModal.booking.id));
   };
 
-  // Edit Modal schließen
   const handleCloseEditModal = () => {
     setEditModal({
       isOpen: false,
@@ -233,25 +222,23 @@ function App() {
     });
   };
 
-  // Autos verwalten
   const handleUpdateCars = (newCars) => {
     setCars(newCars);
   };
 
-  // Benutzer verwalten
   const handleUpdateUsers = (newUsers) => {
     setUsers(newUsers);
   };
 
-  // Seite wechseln
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-        <div className="p-4">
-          {/* Header - nur auf Book-Seite */}
+    <div className="min-h-screen bg-white">
+      {/* Content mit Padding unten für Footer */}
+      <div className="pb-32">
+        <div className="p-6 pt-8">
           {currentPage === 'book' && (
             <Header 
               weekOffset={weekOffset} 
@@ -259,7 +246,6 @@ function App() {
             />
           )}
 
-          {/* Wochentags-Tabs - nur auf Book-Seite */}
           {currentPage === 'book' && (
             <WeekDayTabs 
               selectedDay={selectedDay} 
@@ -267,9 +253,7 @@ function App() {
             />
           )}
 
-          {/* Inhalt basierend auf aktueller Seite */}
           {currentPage === 'book' ? (
-            /* Kalender-Grid */
             <CalendarGrid 
               bookings={bookings.filter(booking => booking.weekOffset === weekOffset)}
               selectedDay={selectedDay}
@@ -278,7 +262,6 @@ function App() {
               cars={cars}
             />
           ) : (
-            /* Manage-Seite */
             <ManagePage
               cars={cars}
               users={users}
@@ -287,35 +270,36 @@ function App() {
             />
           )}
         </div>
+      </div>
 
-        {/* Footer - Sticky */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 z-40">
-          <Footer 
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-          />
-        </div>
-
-        {/* Buchungs-Modal */}
-        <BookingModal
-          isOpen={bookingModal.isOpen}
-          onClose={handleCloseModal}
-          onSubmit={handleSaveBooking}
-          carIndex={bookingModal.carIndex}
-          startTime={bookingModal.startTime}
-          users={users}
-          cars={cars}
+      {/* Sticky Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white z-40 border-t border-gray-100">
+        <Footer 
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
         />
+      </div>
 
-        <EditBookingModal
-          isOpen={editModal.isOpen}
-          onClose={handleCloseEditModal}
-          onSave={handleSaveEditedBooking}
-          onDelete={handleDeleteBooking}
-          booking={editModal.booking}
-          users={users}
-          cars={cars}
-        />
+      {/* Modals */}
+      <BookingModal
+        isOpen={bookingModal.isOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSaveBooking}
+        carIndex={bookingModal.carIndex}
+        startTime={bookingModal.startTime}
+        users={users}
+        cars={cars}
+      />
+
+      <EditBookingModal
+        isOpen={editModal.isOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveEditedBooking}
+        onDelete={handleDeleteBooking}
+        booking={editModal.booking}
+        users={users}
+        cars={cars}
+      />
     </div>
   );
 }
