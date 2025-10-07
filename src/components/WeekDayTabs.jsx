@@ -2,7 +2,7 @@ export default function WeekDayTabs({ selectedDay, onDayChange }) {
   const weekDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
   return (
-    <div className="bg-gray-100 p-1.5 rounded-2xl mb-6">
+    <div className="bg-gray-100 p-1.5 mb-6">
       <div className="flex gap-1">
         {weekDays.map((day) => (
           <button

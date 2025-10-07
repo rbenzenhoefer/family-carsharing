@@ -2,7 +2,7 @@ import { Calendar, Settings } from 'lucide-react';
 
 export default function Footer({ currentPage, onPageChange }) {
   return (
-    <div className="bg-gray-100 p-2 rounded-2xl">
+    <div className="bg-gray-100 p-2">
       <div className="flex gap-4">
         {/* Book Button */}
         <button 

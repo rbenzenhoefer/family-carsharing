@@ -249,46 +249,47 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 pb-20">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6">
-        {/* Header - nur auf Book-Seite */}
-        {currentPage === 'book' && (
-          <Header 
-            weekOffset={weekOffset} 
-            onWeekChange={handleWeekChange} 
-          />
-        )}
+    <div className="min-h-screen bg-white pb-20">
+        <div className="p-4">
+          {/* Header - nur auf Book-Seite */}
+          {currentPage === 'book' && (
+            <Header 
+              weekOffset={weekOffset} 
+              onWeekChange={handleWeekChange} 
+            />
+          )}
 
-        {/* Wochentags-Tabs - nur auf Book-Seite */}
-        {currentPage === 'book' && (
-          <WeekDayTabs 
-            selectedDay={selectedDay} 
-            onDayChange={handleDayChange} 
-          />
-        )}
+          {/* Wochentags-Tabs - nur auf Book-Seite */}
+          {currentPage === 'book' && (
+            <WeekDayTabs 
+              selectedDay={selectedDay} 
+              onDayChange={handleDayChange} 
+            />
+          )}
 
-        {/* Inhalt basierend auf aktueller Seite */}
-        {currentPage === 'book' ? (
-          /* Kalender-Grid */
-          <CalendarGrid 
-            bookings={bookings.filter(booking => booking.weekOffset === weekOffset)}
-            selectedDay={selectedDay}
-            onSlotClick={handleSlotClick}
-            onEditBooking={handleEditBooking}
-            cars={cars}
-          />
-        ) : (
-          /* Manage-Seite */
-          <ManagePage
-            cars={cars}
-            users={users}
-            onUpdateCars={handleUpdateCars}
-            onUpdateUsers={handleUpdateUsers}
-          />
-        )}
+          {/* Inhalt basierend auf aktueller Seite */}
+          {currentPage === 'book' ? (
+            /* Kalender-Grid */
+            <CalendarGrid 
+              bookings={bookings.filter(booking => booking.weekOffset === weekOffset)}
+              selectedDay={selectedDay}
+              onSlotClick={handleSlotClick}
+              onEditBooking={handleEditBooking}
+              cars={cars}
+            />
+          ) : (
+            /* Manage-Seite */
+            <ManagePage
+              cars={cars}
+              users={users}
+              onUpdateCars={handleUpdateCars}
+              onUpdateUsers={handleUpdateUsers}
+            />
+          )}
+        </div>
 
         {/* Footer - Sticky */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-40">
+        <div className="fixed bottom-0 left-0 right-0 p-4 z-40">
           <Footer 
             currentPage={currentPage}
             onPageChange={handlePageChange}
@@ -315,7 +316,6 @@ function App() {
           users={users}
           cars={cars}
         />
-      </div>
     </div>
   );
 }

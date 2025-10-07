@@ -90,7 +90,7 @@ export default function ManagePage({
   return (
     <div className="space-y-6">
       {/* Autos verwalten */}
-      <div className="bg-white rounded-2xl p-6">
+      <div className="bg-white p-6">
         <div className="flex items-center gap-2 mb-4">
           <Car className="w-5 h-5 text-blue-500" />
           <h2 className="text-lg font-semibold text-gray-800">Autos verwalten</h2>
@@ -161,7 +161,7 @@ export default function ManagePage({
       </div>
 
       {/* Benutzer verwalten */}
-      <div className="bg-white rounded-2xl p-6">
+      <div className="bg-white p-6">
         <div className="flex items-center gap-2 mb-4">
           <User className="w-5 h-5 text-blue-500" />
           <h2 className="text-lg font-semibold text-gray-800">Benutzer verwalten</h2>
