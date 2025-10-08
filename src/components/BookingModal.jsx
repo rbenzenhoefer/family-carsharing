@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function BookingModal({ 
   isOpen, 
@@ -12,12 +12,24 @@ export default function BookingModal({
 }) {
   const [formData, setFormData] = useState({
     userId: users[0]?.id || 1,
-    carIndex: carIndex || 0,
-    startTime: startTime || 9,
-    endTime: (startTime || 9) + 1,
+    carIndex: carIndex !== null ? carIndex : 0,
+    startTime: startTime !== null ? startTime : 9,
+    endTime: startTime !== null ? startTime + 1 : 10,
     distance: '',
     note: ''
   });
+
+  // Update wenn Modal geöffnet wird mit neuen Props
+  useEffect(() => {
+    if (isOpen && carIndex !== null && startTime !== null) {
+      setFormData(prev => ({
+        ...prev,
+        carIndex: carIndex,
+        startTime: startTime,
+        endTime: startTime + 1
+      }));
+    }
+  }, [isOpen, carIndex, startTime]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { database } from './firebase';
+import { ref, onValue, set, push, remove, update } from 'firebase/database';
 import Header from './components/Header';
 import WeekDayTabs from './components/WeekDayTabs';
 import CalendarGrid from './components/CalendarGrid';
@@ -86,6 +88,7 @@ function App() {
   const [users, setUsers] = useState([]);
   const [cars, setCars] = useState([]);
   const [currentPage, setCurrentPage] = useState('book');
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const [bookingModal, setBookingModal] = useState({
     isOpen: false,
@@ -98,47 +101,77 @@ function App() {
     booking: null
   });
 
+  // Firebase: Bookings laden und in Echtzeit synchronisieren - FIXED
   useEffect(() => {
-    const savedBookings = localStorage.getItem('bookings');
-    const savedUsers = localStorage.getItem('users');
-    const savedCars = localStorage.getItem('cars');
+    const bookingsRef = ref(database, 'bookings');
     
-    if (savedBookings) {
-      setBookings(JSON.parse(savedBookings));
-    } else {
-      setBookings(initialBookings);
-    }
+    const unsubscribe = onValue(bookingsRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        // Firebase Objekt in Array umwandeln
+        const bookingsArray = Object.keys(data).map(key => ({
+          ...data[key],
+          id: key
+        }));
+        setBookings(bookingsArray);
+        setIsInitialized(true); // Markiere als initialisiert
+      } else {
+        // Keine Daten vorhanden
+        if (!isInitialized) {
+          // NUR beim allerersten Mal Beispiel-Daten laden
+          initialBookings.forEach(booking => {
+            const bookingRef = push(ref(database, 'bookings'));
+            set(bookingRef, booking);
+          });
+          setIsInitialized(true);
+        } else {
+          // Wenn bereits initialisiert, einfach leeres Array (alle wurden gelöscht)
+          setBookings([]);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isInitialized]);
+
+  // Firebase: Users laden und in Echtzeit synchronisieren
+  useEffect(() => {
+    const usersRef = ref(database, 'users');
     
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
-    } else {
-      setUsers(initialUsers);
-    }
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        const usersArray = Object.values(data);
+        setUsers(usersArray);
+      } else if (!isInitialized) {
+        // Initial Users setzen
+        set(usersRef, initialUsers);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isInitialized]);
+
+  // Firebase: Cars laden und in Echtzeit synchronisieren
+  useEffect(() => {
+    const carsRef = ref(database, 'cars');
     
-    if (savedCars) {
-      setCars(JSON.parse(savedCars));
-    } else {
-      setCars(initialCars);
-    }
+    const unsubscribe = onValue(carsRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        const carsArray = Object.values(data);
+        setCars(carsArray);
+      } else {
+        // Initial Cars setzen
+        set(carsRef, initialCars);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (bookings.length > 0) {
-      localStorage.setItem('bookings', JSON.stringify(bookings));
-    }
-  }, [bookings]);
-
-  useEffect(() => {
-    if (users.length > 0) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-  }, [users]);
-
-  useEffect(() => {
-    if (cars.length > 0) {
-      localStorage.setItem('cars', JSON.stringify(cars));
-    }
-  }, [cars]);
 
   const handleDayChange = (day) => {
     setSelectedDay(day);
@@ -156,11 +189,11 @@ function App() {
     });
   };
 
+  // Firebase: Neue Buchung speichern
   const handleSaveBooking = (formData) => {
     const user = users.find(u => u.id === formData.userId);
     
     const newBooking = {
-      id: crypto.randomUUID(),
       carIndex: formData.carIndex,
       day: selectedDay,
       startTime: formData.startTime,
@@ -173,7 +206,9 @@ function App() {
       weekOffset: weekOffset
     };
 
-    setBookings(prev => [...prev, newBooking]);
+    // Zu Firebase hinzufügen
+    const bookingRef = push(ref(database, 'bookings'));
+    set(bookingRef, newBooking);
   };
 
   const handleCloseModal = () => {
@@ -191,28 +226,31 @@ function App() {
     });
   };
 
+  // Firebase: Buchung bearbeiten
   const handleSaveEditedBooking = (formData) => {
     const user = users.find(u => u.id === formData.userId);
     
-    setBookings(prev => prev.map(booking => 
-      booking.id === editModal.booking.id 
-        ? {
-            ...booking,
-            userId: formData.userId,
-            userName: user.name,
-            color: user.color,
-            carIndex: formData.carIndex,
-            startTime: formData.startTime,
-            endTime: formData.endTime,
-            distance: formData.distance || null,
-            note: formData.note || null
-          }
-        : booking
-    ));
+    const updatedBooking = {
+      ...editModal.booking,
+      userId: formData.userId,
+      userName: user.name,
+      color: user.color,
+      carIndex: formData.carIndex,
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      distance: formData.distance || null,
+      note: formData.note || null
+    };
+
+    // In Firebase aktualisieren
+    const bookingRef = ref(database, `bookings/${editModal.booking.id}`);
+    update(bookingRef, updatedBooking);
   };
 
+  // Firebase: Buchung löschen
   const handleDeleteBooking = () => {
-    setBookings(prev => prev.filter(booking => booking.id !== editModal.booking.id));
+    const bookingRef = ref(database, `bookings/${editModal.booking.id}`);
+    remove(bookingRef);
   };
 
   const handleCloseEditModal = () => {
@@ -222,12 +260,16 @@ function App() {
     });
   };
 
+  // Firebase: Cars aktualisieren
   const handleUpdateCars = (newCars) => {
-    setCars(newCars);
+    const carsRef = ref(database, 'cars');
+    set(carsRef, newCars);
   };
 
+  // Firebase: Users aktualisieren
   const handleUpdateUsers = (newUsers) => {
-    setUsers(newUsers);
+    const usersRef = ref(database, 'users');
+    set(usersRef, newUsers);
   };
 
   const handlePageChange = (page) => {

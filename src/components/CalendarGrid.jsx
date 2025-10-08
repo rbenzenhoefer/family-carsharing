@@ -1,5 +1,7 @@
 import BookingBlock from './BookingBlock';
 import { detectConflicts } from '../utils/conflictUtils';
+import { database } from '../firebase';
+import { ref, update } from 'firebase/database';
 
 export default function CalendarGrid({ 
   bookings, 
@@ -11,6 +13,20 @@ export default function CalendarGrid({
   const timeSlots = Array.from({ length: 25 }, (_, i) => i);
   const dayBookings = bookings.filter(booking => booking.day === selectedDay);
   const conflicts = detectConflicts(dayBookings);
+
+  const handleSlotClick = (carIndex, timeSlot) => {
+    onSlotClick(carIndex, timeSlot);
+  };
+
+  // Drag & Drop Handler - Updated Buchung in Firebase
+  const handleDragBooking = (booking, newPosition) => {
+    const bookingRef = ref(database, `bookings/${booking.id}`);
+    update(bookingRef, {
+      carIndex: newPosition.carIndex,
+      startTime: newPosition.startTime,
+      endTime: newPosition.endTime
+    });
+  };
 
   return (
     <div className="bg-white overflow-hidden">
@@ -58,11 +74,11 @@ export default function CalendarGrid({
                 <div
                   key={`${car.index}-${time}`}
                   className="h-10 border-r border-b border-gray-200 cursor-pointer hover:bg-gray-50"
-                  onClick={() => onSlotClick(car.index, time)}
+                  onClick={() => handleSlotClick(car.index, time)}
                 />
               ))}
 
-              {/* Buchungen FÜR DIESE SPALTE */}
+              {/* Buchungen für diese Spalte */}
               {dayBookings
                 .filter(b => b.carIndex === car.index)
                 .map(booking => (
@@ -71,6 +87,7 @@ export default function CalendarGrid({
                     booking={booking}
                     hasConflict={conflicts.has(booking.id)}
                     onEdit={onEditBooking}
+                    onDrag={handleDragBooking}
                   />
                 ))}
             </div>
